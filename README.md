@@ -10,4 +10,10 @@ available.
 
 For tracking our work on measuring Token SDK flow run times.
 No substantial work happens here.
-Please see [upstream](https://github.com/corda/token-sdk) for more info.
+For more info on Token SDK please see [upstream](https://github.com/corda/token-sdk) project.
+
+## Building
+
+```
+./gradlew workflows:install modules:money:install contracts:install
+```
