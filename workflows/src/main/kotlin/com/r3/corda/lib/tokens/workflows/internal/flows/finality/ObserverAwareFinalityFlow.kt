@@ -46,32 +46,43 @@ class ObserverAwareFinalityFlow private constructor(
 
     @Suspendable
     override fun call(): SignedTransaction {
+        logger.info("zZ-OAFF start")
         // Check there is a session for each participant, apart from the node itself.
         val ledgerTransaction: LedgerTransaction = transactionBuilder?.toLedgerTransaction(serviceHub)
                 ?: signedTransaction!!.toLedgerTransaction(serviceHub, false)
+        logger.info("zZ-OAFF step1")
         val participants: List<AbstractParty> = ledgerTransaction.participants
         val issuers: Set<Party> = ledgerTransaction.commands
                 .map(CommandWithParties<*>::value)
                 .filterIsInstance<RedeemTokenCommand>()
                 .map { it.token.issuer }
                 .toSet()
+        logger.info("zZ-OAFF step2")
         val wellKnownParticipantsAndIssuers: Set<Party> = participants.toWellKnownParties(serviceHub).toSet() + issuers
         val wellKnownParticipantsApartFromUs: Set<Party> = wellKnownParticipantsAndIssuers - ourIdentity
         // We need participantSessions for all participants apart from us.
+        logger.info("zZ-OAFF step3")
         requireSessionsForParticipants(wellKnownParticipantsApartFromUs, allSessions)
+        logger.info("zZ-OAFF step4")
         val finalSessions = allSessions.filter { it.counterparty != ourIdentity }
         // Notify all session counterparties of their role. Observers store the transaction using
         // StatesToRecord.ALL_VISIBLE, participants store the transaction using StatesToRecord.ONLY_RELEVANT.
+        logger.info("zZ-OAFF step5")
         finalSessions.forEach { session ->
             if (session.counterparty in wellKnownParticipantsAndIssuers) session.send(TransactionRole.PARTICIPANT)
             else session.send(TransactionRole.OBSERVER)
         }
         // Sign and finalise the transaction, obtaining the signing keys required from the LedgerTransaction.
+        logger.info("zZ-OAFF step6")
         val ourSigningKeys = ledgerTransaction.ourSigningKeys(serviceHub)
+        logger.info("zZ-OAFF step7")
         val stx = transactionBuilder?.let {
             serviceHub.signInitialTransaction(it, signingPubKeys = ourSigningKeys)
         } ?: signedTransaction
         ?: throw IllegalArgumentException("Didn't provide transactionBuilder nor signedTransaction to the flow.")
-        return subFlow(FinalityFlow(transaction = stx, sessions = finalSessions))
+        logger.info("zZ-OAFF step8")
+        val ret = subFlow(FinalityFlow(transaction = stx, sessions = finalSessions))
+        logger.info("zZ-OAFF finish")
+        return ret
     }
 }
