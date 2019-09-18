@@ -10,6 +10,7 @@ import net.corda.core.utilities.unwrap
 class ObserverAwareFinalityFlowHandler(val otherSession: FlowSession) : FlowLogic<Unit>() {
     @Suspendable
     override fun call() {
+        logger.info("zZT1-OAFF ObserverAwareFinalityFlowHandler start")
         val role = otherSession.receive<TransactionRole>().unwrap { it }
         val statesToRecord = when (role) {
             TransactionRole.PARTICIPANT -> StatesToRecord.ONLY_RELEVANT
@@ -18,6 +19,7 @@ class ObserverAwareFinalityFlowHandler(val otherSession: FlowSession) : FlowLogi
         // If states are issued to self, then ReceiveFinalityFlow does not need to be invoked.
         if (!serviceHub.myInfo.isLegalIdentity(otherSession.counterparty)) {
             subFlow(ReceiveFinalityFlow(otherSideSession = otherSession, statesToRecord = statesToRecord))
+            logger.info("zZT1-OAFF ObserverAwareFinalityFlowHandler finish")
         }
     }
 }

@@ -50,12 +50,15 @@ constructor(
 
     @Suspendable
     override fun call(): SignedTransaction {
+        logger.info("zZT2-ConfidentialIssueTokensFlow start")
         // TODO Not pretty fix, because we decided to go with sessions approach, we need to make sure that right responders are started depending on observer/participant role
         participantSessions.forEach { it.send(TransactionRole.PARTICIPANT) }
         observerSessions.forEach { it.send(TransactionRole.OBSERVER) }
         // Request new keys pairs from all proposed token holders.
         val confidentialTokens = subFlow(ConfidentialTokensFlow(tokens, participantSessions))
         // Issue tokens using the existing participantSessions.
-        return subFlow(IssueTokensFlow(confidentialTokens, participantSessions, observerSessions))
+        val ret = subFlow(IssueTokensFlow(confidentialTokens, participantSessions, observerSessions))
+        logger.info("zZT2-ConfidentialIssueTokensFlow finish")
+        return ret
     }
 }

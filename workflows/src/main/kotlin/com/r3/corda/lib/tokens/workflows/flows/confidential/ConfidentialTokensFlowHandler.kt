@@ -12,5 +12,9 @@ import net.corda.core.flows.FlowSession
  */
 class ConfidentialTokensFlowHandler(val otherSession: FlowSession) : FlowLogic<Unit>() {
     @Suspendable
-    override fun call() = subFlow(AnonymisePartiesFlowHandler(otherSession))
+    override fun call() {
+        logger.info("zZT2-ConfidentialTokensFlowHandler start")
+        subFlow(AnonymisePartiesFlowHandler(otherSession))
+        logger.info("zZT2-ConfidentialTokensFlowHandler finish")
+    }
 }
